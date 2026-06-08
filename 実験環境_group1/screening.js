@@ -9,6 +9,9 @@ const scr_stimuli = [
   { order: ["anti", "normal", "quiet"], quiet_position: 3, file: new URL("./assets/screening/screening_anti_normal_quiet.wav", window.location.href).href },
 ];
 
+// スクリーニング連結音声のプリロード結果を保持します。
+let preloaded_scr_stimuli = null;
+
 // 参加者が本試行前に音量を合わせるための画面です。
 const volume_adjustment = {
   type: jsPsychHtmlButtonResponse,
@@ -218,7 +221,7 @@ const screening_trial = {
         decideBtn.disabled = true;
         radios.forEach(r => r.disabled = true);
 
-        playScreeningFile(sequence.file)
+        playScreeningFile(sequence.loaded_file || sequence.file)
           .then(() => {
             playBtn.textContent = "再生済み";
             radios.forEach(r => r.disabled = false);
