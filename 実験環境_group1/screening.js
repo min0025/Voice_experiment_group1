@@ -15,7 +15,7 @@ const volume_adjustment = {
     <p style="font-size: 20px; margin-bottom: 35px"><u>音声は何回でも再生可能です</u>。</p>
     <div style="text-align: center; margin-bottom: 30px;">
       <button type="button" id="volumePlayBtn">再生</button>
-      <audio id="volumeAudio" src="./assets/practice/VOICEACTRESS100_026_054.wav"></audio>
+      <audio id="volumeAudio" src="./assets/practice/VOICEACTRESS100_026_006.wav"></audio>
     </div>
     <p style="font-size: 18px;">音量調節が終わったら「次へ」を押してください。</p>
   `,
@@ -72,6 +72,7 @@ const screening_trial = {
     <p style="font-size: 20px; margin-bottom: 40px">この試行は6回行われます。</p>
     <hr>
     <div id="controls"></div>
+    <audio id="screeningAudio" preload="auto"></audio>
     <br>
     <button id="nextBtn" disabled>次へ</button>
   `,
@@ -85,40 +86,63 @@ const screening_trial = {
     let corrects = []; // 正解記録
 
     const container = document.getElementById("controls"); // 何回目の音声再生か
+    const screeningAudio = document.getElementById("screeningAudio"); // 連続再生に使う共通audio要素
     const nextBtn = document.getElementById("nextBtn"); // 次へボタンの要素
 
-    // 音を順番に再生
-    // 3つの音を指定順で連続再生します。
-    function playSequence(order, callback){
-      let i = 0;
+    // 次の音へ移る前に少し間を空ける待機関数です。
+    function delay(ms){
+      return new Promise((resolve) => {
+        setTimeout(resolve, ms);
+      });
+    }
 
-      // 現在位置の音を1つ再生して次の音へ進めます。
-      function playNext(){
-        if(i >= order.length){
-          callback();
-          return;
+    // 共通audio要素で単一の音を確実に再生します。
+    function playClip(file){
+      return new Promise((resolve, reject) => {
+        const cleanup = () => {
+          screeningAudio.removeEventListener("ended", handleEnded);
+          screeningAudio.removeEventListener("error", handleError);
+        };
+
+        const handleEnded = () => {
+          cleanup();
+          resolve();
+        };
+
+        const handleError = () => {
+          cleanup();
+          reject(new Error(`Failed to play ${file}`));
+        };
+
+        screeningAudio.pause();
+        screeningAudio.currentTime = 0;
+        screeningAudio.src = file;
+        screeningAudio.load();
+        screeningAudio.addEventListener("ended", handleEnded);
+        screeningAudio.addEventListener("error", handleError);
+
+        screeningAudio.play().catch((error) => {
+          cleanup();
+          reject(error);
+        });
+      });
+    }
+
+    // 3つの音を指定順で連続再生します。
+    async function playSequence(order, callback, playBtn){
+      try {
+        for (const stim of order) {
+          await playClip(stim.file);
+          await delay(500);
         }
 
-        const audio = new Audio(order[i].file);
-        audio.preload = "auto";
-
-        audio.play().catch((error) => {
-          console.error("Screening audio playback failed:", order[i].file, error);
-          alert("音声の再生に失敗しました。通信状況やファイル配置を確認して、もう一度お試しください。");
-          playBtn.disabled = false;
-          playBtn.textContent = "再生";
-        });
-
-        // 再生終了後に次へ
-        audio.onended = function(){
-          setTimeout(() => {
-            i++;
-            playNext();
-          }, 500);
-        };
+        callback();
+      } catch (error) {
+        console.error("Screening audio playback failed:", error);
+        alert("音声の再生に失敗しました。通信状況やファイル配置を確認して、もう一度お試しください。");
+        playBtn.disabled = false;
+        playBtn.textContent = "再生";
       }
-
-      playNext(); // 次の再生へ
     }
 
     // UIの描画
@@ -165,7 +189,7 @@ const screening_trial = {
           // 再生後
           playBtn.textContent = "再生済み";
           radios.forEach(r => r.disabled = false);
-        });
+        }, playBtn);
       };
 
       // =========================
