@@ -18,7 +18,8 @@ const volume_adjustment = {
   stimulus: `
     <h1>音量の調節</h1><br>
     <p style="font-size: 20px">ここでは、ご自身で音量調節を行ってもらいます。再生ボタンを押すと音声が流れます。</p>
-    <p style="font-size: 20px"><U><b>「イヤホン」または「ヘッドホン」は装着したままで音声を聞き、ちょうどよいと思う音量に調節してください。</b></U></p>
+    <p style="font-size: 20px"><U><b>「イヤホン」または「ヘッドホン」は装着したままで音声を聞き、可能であれば「有線」のものをご使用ください。</b></U></p>
+    <p style="font-size: 20px"><U><b>また、パソコンのサウンド環境は「モノラル」ではなく「ステレオ」に設定してください。</b></U></p>
     <p style="font-size: 20px; margin-bottom: 35px"><u>音声は何回でも再生可能です</u>。</p>
     <div style="text-align: center; margin-bottom: 30px;">
       <button type="button" id="volumePlayBtn">再生</button>
@@ -35,7 +36,7 @@ const volume_adjustment = {
       document.querySelector("#jspsych-html-button-response-button-0 button") ||
       document.querySelector("#jspsych-html-button-response-button-0");
     const volumeAudioFile = new URL(
-      "./assets/practice/VOICEACTRESS100_026_006.wav",
+      "./assets/practice/VOICEACTRESS100_026_054.wav",
       window.location.href
     ).href;
 
@@ -102,7 +103,8 @@ const screening_trial = {
   // 画面表示内容
   stimulus: `
     <h1>実験前の確認</h1><br>
-    <p style="font-size: 20px"><B><U>必ず「ヘッドホン」か「イヤホン」を装着してください</U></B></p>
+    <p style="font-size: 20px"><B><U>必ず「ヘッドホン」または「イヤホン」を装着し、可能であれば「有線」のものをご使用ください</U></B></p>
+    <p style="font-size: 20px"><B><U>また、パソコンのサウンド環境は「モノラル」ではなく「ステレオ」に設定してください</U></B></p>
     <p style="font-size: 20px">再生ボタンを押すと、3つの音が順番に再生されます</p>
     <p style="font-size: 20px">3つの音の中で<b><u>最も小さく聞こえた音</u></b>について、<U><b>その音が何番目に流れたか</b></U>を選択してください</p>
     <p style="font-size: 20px; margin-bottom: 40px">この試行は6回行われます。</p>
@@ -322,8 +324,9 @@ const screening_retry_notice = {
   type: jsPsychHtmlButtonResponse,
   stimulus: `
     <h1>装着状況の再確認</h1><br>
-    <p style="font-size: 20px"><b><u>「イヤホン」または「ヘッドホン」を装着した上で聴取してますか？</u></b></p>
-    <p style="font-size: 20px">必ず装着した上で参加してください。</p>
+    <p style="font-size: 20px"><b><u>「イヤホン」または「ヘッドホン」を装着した上で聴取していますか？ 可能であれば「有線」のものをご使用ください。</u></b></p>
+    <p style="font-size: 20px"><b><u>パソコンのサウンド環境が「モノラル」ではなく「ステレオ」になっていることもご確認ください。</u></b></p>
+    <p style="font-size: 20px">必ず設定を確認した上で参加してください。</p>
     <p style="font-size: 20px">最初からやり直します。</p>
   `,
   choices: ["最初から"]
