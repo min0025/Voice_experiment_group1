@@ -19,7 +19,7 @@ const volume_adjustment = {
     <p style="font-size: 20px; margin-bottom: 35px"><u>音声は何回でも再生可能です</u>。</p>
     <div style="text-align: center; margin-bottom: 30px;">
       <button type="button" id="volumePlayBtn">再生</button>
-      <audio id="volumeAudio" src="./assets/practice/VOICEACTRESS100_026_006.wav"></audio>
+      <audio id="volumeAudio" src="./assets/practice/VOICEACTRESS100_026_054.wav"></audio>
     </div>
     <p style="font-size: 18px;">音量調節が終わったら「次へ」を押してください。</p>
   `,
