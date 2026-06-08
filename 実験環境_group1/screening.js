@@ -19,7 +19,7 @@ const volume_adjustment = {
     <p style="font-size: 20px; margin-bottom: 35px"><u>音声は何回でも再生可能です</u>。</p>
     <div style="text-align: center; margin-bottom: 30px;">
       <button type="button" id="volumePlayBtn">再生</button>
-      <audio id="volumeAudio" src="./assets/practice/VOICEACTRESS100_026_054.wav"></audio>
+      <audio id="volumeAudio" src="./assets/practice/VOICEACTRESS100_026_006.wav"></audio>
     </div>
     <p style="font-size: 18px;">音量調節が終わったら「次へ」を押してください。</p>
   `,
@@ -31,16 +31,45 @@ const volume_adjustment = {
     const nextBtn =
       document.querySelector("#jspsych-html-button-response-button-0 button") ||
       document.querySelector("#jspsych-html-button-response-button-0");
+    const volumeAudioFile = new URL(
+      "./assets/practice/VOICEACTRESS100_026_006.wav",
+      window.location.href
+    ).href;
 
     if (!playBtn || !audio || !nextBtn) return;
 
     nextBtn.disabled = true;
+    playBtn.disabled = true;
+    playBtn.textContent = "読み込み中...";
+
+    fetch(volumeAudioFile, { cache: "force-cache" })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`Failed to preload ${volumeAudioFile}: ${response.status}`);
+        }
+        return response.blob();
+      })
+      .then((blob) => {
+        audio.src = URL.createObjectURL(blob);
+        audio.load();
+        playBtn.disabled = false;
+        playBtn.textContent = "再生";
+      })
+      .catch((error) => {
+        console.error("Volume adjustment preload failed:", volumeAudioFile, error);
+        playBtn.disabled = false;
+        playBtn.textContent = "再生";
+      });
 
     playBtn.addEventListener("click", function(){
       nextBtn.disabled = true;
       playBtn.disabled = true;
       audio.currentTime = 0;
-      audio.play();
+      audio.play().catch((error) => {
+        console.error("Volume adjustment playback failed:", volumeAudioFile, error);
+        playBtn.disabled = false;
+        playBtn.textContent = "再生";
+      });
     });
 
     audio.addEventListener("play", function(){
@@ -93,6 +122,30 @@ const screening_trial = {
     const container = document.getElementById("controls"); // 何回目の音声再生か
     const screeningAudio = document.getElementById("screeningAudio"); // スクリーニング再生に使うaudio要素
     const nextBtn = document.getElementById("nextBtn"); // 次へボタンの要素
+
+    // 連結済みスクリーニング音声を先に取得して再生ラグを減らします。
+    async function preloadScreeningFiles(){
+      if (preloaded_scr_stimuli) {
+        return preloaded_scr_stimuli;
+      }
+
+      preloaded_scr_stimuli = await Promise.all(
+        scr_stimuli.map(async (stim) => {
+          const response = await fetch(stim.file, { cache: "force-cache" });
+          if (!response.ok) {
+            throw new Error(`Failed to preload ${stim.file}: ${response.status}`);
+          }
+
+          const blob = await response.blob();
+          return {
+            ...stim,
+            loaded_file: URL.createObjectURL(blob),
+          };
+        })
+      );
+
+      return preloaded_scr_stimuli;
+    }
 
     // 単一の連結音声ファイルを1回再生します。
     function playScreeningFile(file){
@@ -214,8 +267,26 @@ const screening_trial = {
       }
     };
   }
+    container.innerHTML = `<p style="font-size: 20px; margin-top: 30px;">音声を読み込んでいます。しばらくお待ちください。</p>`;
 
-    render();
+    preloadScreeningFiles()
+      .then((loadedStimuli) => {
+        for (let i = 0; i < sequence_order.length; i++) {
+          const matched = loadedStimuli.find(
+            (stim) => stim.file === sequence_order[i].file
+          );
+          if (matched) {
+            sequence_order[i] = matched;
+          }
+        }
+
+        render();
+      })
+      .catch((error) => {
+        console.error("Screening preload failed:", error);
+        container.innerHTML =
+          `<p style="font-size: 20px; margin-top: 30px;">音声の読み込みに失敗しました。ページを再読み込みして、もう一度お試しください。</p>`;
+      });
 
     // =========================
     // 試行正解数の計算結果
