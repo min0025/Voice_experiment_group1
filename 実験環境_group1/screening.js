@@ -1,8 +1,12 @@
 // スクリーニング用刺激
+// 3音を1ファイルに連結した6通りの順列音声と、quiet の正解位置を対応づけます。
 const scr_stimuli = [
-  {name: "quiet", file: "./assets/screening/tone_quiet.wav"},
-  {name: "normal", file: "./assets/screening/tone_normal.wav"},
-  {name: "anti", file: "./assets/screening/tone_antiphase.wav"}
+  { order: ["quiet", "normal", "anti"], quiet_position: 1, file: new URL("./assets/screening/screening_quiet_normal_anti.wav", window.location.href).href },
+  { order: ["quiet", "anti", "normal"], quiet_position: 1, file: new URL("./assets/screening/screening_quiet_anti_normal.wav", window.location.href).href },
+  { order: ["normal", "quiet", "anti"], quiet_position: 2, file: new URL("./assets/screening/screening_normal_quiet_anti.wav", window.location.href).href },
+  { order: ["normal", "anti", "quiet"], quiet_position: 3, file: new URL("./assets/screening/screening_normal_anti_quiet.wav", window.location.href).href },
+  { order: ["anti", "quiet", "normal"], quiet_position: 2, file: new URL("./assets/screening/screening_anti_quiet_normal.wav", window.location.href).href },
+  { order: ["anti", "normal", "quiet"], quiet_position: 3, file: new URL("./assets/screening/screening_anti_normal_quiet.wav", window.location.href).href },
 ];
 
 // 参加者が本試行前に音量を合わせるための画面です。
@@ -84,20 +88,14 @@ const screening_trial = {
     let current = 0; // 現在の試行番号
     let answers = []; // 回答記録
     let corrects = []; // 正解記録
+    const sequence_order = jsPsych.randomization.shuffle([...scr_stimuli]); // 6通りの順列を1回ずつ使う順番
 
     const container = document.getElementById("controls"); // 何回目の音声再生か
-    const screeningAudio = document.getElementById("screeningAudio"); // 連続再生に使う共通audio要素
+    const screeningAudio = document.getElementById("screeningAudio"); // スクリーニング再生に使うaudio要素
     const nextBtn = document.getElementById("nextBtn"); // 次へボタンの要素
 
-    // 次の音へ移る前に少し間を空ける待機関数です。
-    function delay(ms){
-      return new Promise((resolve) => {
-        setTimeout(resolve, ms);
-      });
-    }
-
-    // 共通audio要素で単一の音を確実に再生します。
-    function playClip(file){
+    // 単一の連結音声ファイルを1回再生します。
+    function playScreeningFile(file){
       return new Promise((resolve, reject) => {
         const cleanup = () => {
           screeningAudio.removeEventListener("ended", handleEnded);
@@ -128,31 +126,13 @@ const screening_trial = {
       });
     }
 
-    // 3つの音を指定順で連続再生します。
-    async function playSequence(order, callback, playBtn){
-      try {
-        for (const stim of order) {
-          await playClip(stim.file);
-          await delay(500);
-        }
-
-        callback();
-      } catch (error) {
-        console.error("Screening audio playback failed:", error);
-        alert("音声の再生に失敗しました。通信状況やファイル配置を確認して、もう一度お試しください。");
-        playBtn.disabled = false;
-        playBtn.textContent = "再生";
-      }
-    }
-
     // UIの描画
     // 各試行の画面を描画して正解位置も記録します。
     function render(){
-      // 毎回シャッフルして順番を変える
-      let order = jsPsych.randomization.shuffle([...scr_stimuli]);
-      // 正解（quietの位置）を記録
-      const correct = order.findIndex(s => s.name === "quiet") + 1;
-      corrects[current] = correct;
+      // 連結済み6パターンを1試行につき1回ずつ使います。
+      const sequence = sequence_order[current];
+      // quiet の正解位置を記録します。
+      corrects[current] = sequence.quiet_position;
 
       // HTML描画
       container.innerHTML = `
@@ -185,11 +165,17 @@ const screening_trial = {
         decideBtn.disabled = true;
         radios.forEach(r => r.disabled = true);
 
-        playSequence(order, function(){
-          // 再生後
-          playBtn.textContent = "再生済み";
-          radios.forEach(r => r.disabled = false);
-        }, playBtn);
+        playScreeningFile(sequence.file)
+          .then(() => {
+            playBtn.textContent = "再生済み";
+            radios.forEach(r => r.disabled = false);
+          })
+          .catch((error) => {
+            console.error("Screening audio playback failed:", sequence.file, error);
+            alert("音声の再生に失敗しました。通信状況やファイル配置を確認して、もう一度お試しください。");
+            playBtn.disabled = false;
+            playBtn.textContent = "再生";
+          });
       };
 
       // =========================
