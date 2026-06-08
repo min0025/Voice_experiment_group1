@@ -17,7 +17,7 @@ const speaker_gender_map = [
 // =========================
 // 本試行・練習試行の刺激一覧
 // =========================
-// 本試行76〜100番音声にファイルパスと話者メタデータを付与します。
+// 本試行1〜25番音声にファイルパスと話者メタデータを付与します。
 const all_stimuli = Array.from({ length: 25 }, (_, i) => {
   const speakerNumber = i + 1;
   const num = String(speakerNumber).padStart(3, "0");
@@ -30,7 +30,7 @@ const all_stimuli = Array.from({ length: 25 }, (_, i) => {
   };
 });
 
-// 今回の本試行では定義済みの76〜100番音声を提示します。
+// 今回の本試行では定義済みの1〜25番音声を提示します。
 const assigned_stimuli = jsPsych.randomization.shuffle(all_stimuli);
 
 // 練習用に使う2音声のメタデータです。
